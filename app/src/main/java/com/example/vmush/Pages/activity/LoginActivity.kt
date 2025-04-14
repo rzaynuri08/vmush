@@ -1,4 +1,4 @@
-package com.example.vmush.Pages
+package com.example.vmush.Pages.activity
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
