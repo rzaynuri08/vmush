@@ -9,4 +9,8 @@
         <item name="fullscreenBackgroundColor">@color/light_blue_900</item>
         <item name="fullscreenTextColor">@color/light_blue_A400</item>
     </style>
+
+    <style name="Theme.Fragment" parent="">
+        <item name="fullscreenBackgroundColor">#F5F5F5</item>
+    </style>
 </resources>

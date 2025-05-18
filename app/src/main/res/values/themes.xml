@@ -17,4 +17,9 @@
         <item name="fullscreenBackgroundColor">@color/light_blue_600</item>
         <item name="fullscreenTextColor">@color/light_blue_A200</item>
     </style>
+
+    <style name="Fragment" parent="Base.Theme.Vmush">
+        <item name="fullscreenBackgroundColor">#F5F5F5</item>
+    </style>
+
 </resources>

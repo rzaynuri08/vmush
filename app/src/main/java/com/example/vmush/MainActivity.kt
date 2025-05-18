@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.example.vmush.Pages.Fragment.HomeFragment
+import com.example.vmush.Pages.Fragment.PermintaanFragment
 import com.example.vmush.Pages.Fragment.Profile_Fragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
@@ -20,6 +21,7 @@ class MainActivity : AppCompatActivity() {
             when (item.itemId) {
                 R.id.navigation_home -> loadFragment(HomeFragment())
                 R.id.navigation_profile -> loadFragment(Profile_Fragment())
+                R.id.navigation_requests -> loadFragment(PermintaanFragment())
                 else -> false
             }
         }
