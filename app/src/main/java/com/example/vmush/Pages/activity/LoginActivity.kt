@@ -3,11 +3,16 @@ package com.example.vmush.Pages.activity
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
+import android.widget.EditText
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import com.example.vmush.MainActivity // Pastikan import MainActivity
+import com.example.vmush.MainActivity
+import com.example.vmush.model.UserResponse
+import com.example.vmush.Network.RetrofitClient
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import com.example.vmush.R
 
 class LoginActivity : AppCompatActivity() {
@@ -16,16 +21,52 @@ class LoginActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_login)
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
-
+        val edtUsername = findViewById<EditText>(R.id.etUsername)
+        val edtPassword = findViewById<EditText>(R.id.etPassword)
         val btnLogin = findViewById<Button>(R.id.btnLogin)
+
         btnLogin.setOnClickListener {
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
+            val username = edtUsername.text.toString()
+            val password = edtPassword.text.toString()
+
+            if (username.isEmpty() || password.isEmpty()) {
+                showErrorToast("Username dan Password tidak boleh kosong!")
+                return@setOnClickListener
+            }
+
+            val call = RetrofitClient.apiService.getUsers()
+
+            call.enqueue(object : Callback<UserResponse> {
+                override fun onResponse(call: Call<UserResponse>, response: Response<UserResponse>) {
+                    if (response.isSuccessful) {
+                        val users = response.body()?.DataAkun // Access the users list from the response
+                        val user = users?.find { it.username == username && it.pwasli == password }
+                        if (user != null) {
+                            // Login successful, save user info and move to MainActivity
+                            val intent = Intent(this@LoginActivity, MainActivity::class.java)
+                            startActivity(intent)
+                            finish() // Close the login activity so the user can't go back
+                            showSuccessToast("Login berhasil, selamat datang ${user.nama}!")
+                        } else {
+                            showErrorToast("Login gagal. Periksa username dan password Anda.")
+                        }
+                    } else {
+                        showErrorToast("Gagal menghubungi server.")
+                    }
+                }
+
+                override fun onFailure(call: Call<UserResponse>, t: Throwable) {
+                    showErrorToast("Gagal terhubung ke server: ${t.message}")
+                }
+            })
         }
+    }
+
+    private fun showErrorToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun showSuccessToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 }
