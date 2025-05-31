@@ -6,6 +6,7 @@ import androidx.fragment.app.Fragment
 import com.example.vmush.Pages.Fragment.HomeFragment
 import com.example.vmush.Pages.Fragment.PermintaanFragment
 import com.example.vmush.Pages.Fragment.Profile_Fragment
+import com.example.vmush.ui.CalendarFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class MainActivity : AppCompatActivity() {
@@ -22,6 +23,7 @@ class MainActivity : AppCompatActivity() {
                 R.id.navigation_home -> loadFragment(HomeFragment())
                 R.id.navigation_profile -> loadFragment(Profile_Fragment())
                 R.id.navigation_requests -> loadFragment(PermintaanFragment())
+                R.id.navigation_calendar -> loadFragment(CalendarFragment())
                 else -> false
             }
         }

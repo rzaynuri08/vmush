@@ -1,33 +1,42 @@
 package com.example.vmush.Pages.Fragment
 
+import android.content.Context.MODE_PRIVATE
+import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.TextView
+import android.widget.Toast
+import androidx.fragment.app.Fragment
+import com.example.vmush.Pages.activity.LoginActivity
 import com.example.vmush.R
+import com.example.vmush.Network.RetrofitClient
+import com.squareup.picasso.Picasso
+import com.example.vmush.model.UserResponse
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-
-/**
- * A simple [Fragment] subclass.
- * Use the [Profile_Fragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class Profile_Fragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
+
+    private lateinit var sharedPreferences: SharedPreferences
+    private lateinit var btnLogout: Button
+    private lateinit var tvName: TextView
+    private lateinit var tvEmail: TextView
+    private lateinit var tvFullNameLabel: TextView
+    private lateinit var tvPhoneLabel: TextView
+    private lateinit var tvLocationLabel: TextView
+    private lateinit var ivProfilePic: ImageView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
+
+        // Initialize SharedPreferences to handle login state
+        sharedPreferences = requireActivity().getSharedPreferences("MyPrefs", MODE_PRIVATE)
     }
 
     override fun onCreateView(
@@ -35,26 +44,79 @@ class Profile_Fragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_profile_, container, false)
+        val view = inflater.inflate(R.layout.fragment_profile_, container, false)
+
+        // Initialize the UI elements
+        btnLogout = view.findViewById(R.id.btnLogout)
+        tvName = view.findViewById(R.id.tvName)
+        tvEmail = view.findViewById(R.id.tvEmail)
+        tvFullNameLabel = view.findViewById(R.id.tvFullNameValue)
+        tvPhoneLabel = view.findViewById(R.id.tvPhoneValue)
+        tvLocationLabel = view.findViewById(R.id.tvLocationValue)
+        ivProfilePic = view.findViewById(R.id.ivProfilePic)
+
+        // Fetch the saved username from SharedPreferences
+        val username = sharedPreferences.getString("username", "")
+
+        if (!username.isNullOrEmpty()) {
+            // Call API to fetch user data if the username is available
+            fetchUserData(username)
+        }
+
+        // Handle Logout Button click
+        btnLogout.setOnClickListener {
+            // Clear login state and username from SharedPreferences
+            with(sharedPreferences.edit()) {
+                putBoolean("isLoggedIn", false)  // Set login state to false
+                remove("username")  // Remove the saved username
+                apply()  // Apply changes
+            }
+
+            // Navigate back to LoginActivity
+            val intent = Intent(requireContext(), LoginActivity::class.java)
+            startActivity(intent)
+            requireActivity().finish() // Close Profile_Fragment so the user can't go back to it using the back button
+        }
+
+        return view
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment Profile_Fragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            Profile_Fragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
+    private fun fetchUserData(username: String) {
+        // Make the API call to fetch the user data based on username
+        val call = RetrofitClient.apiService.getUserByUsername(username)  // Pass username to the API endpoint
+
+        call.enqueue(object : Callback<UserResponse> {
+            override fun onResponse(call: Call<UserResponse>, response: Response<UserResponse>) {
+                if (response.isSuccessful) {
+                    val user = response.body()?.DataAkun?.firstOrNull() // Assuming you only have one user in the response
+                    if (user != null) {
+                        // Update the UI with user information
+                        tvName.text = user.nama
+                        tvEmail.text = user.email
+                        tvFullNameLabel.text = user.nama
+                        tvPhoneLabel.text = user.nohp
+                        tvLocationLabel.text = user.alamat
+
+                        Picasso.get()
+                            .load(user.gambar) // The URL of the image
+                            .into(ivProfilePic)
+
+                    }
+                } else {
+                    // Handle error case (e.g., server error)
+                    showErrorToast("Failed to fetch user data.")
                 }
             }
+
+            override fun onFailure(call: Call<UserResponse>, t: Throwable) {
+                // Handle failure (e.g., network error)
+                showErrorToast("Error: ${t.message}")
+            }
+        })
+    }
+
+    private fun showErrorToast(message: String) {
+        // Show a toast message for errors
+        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
     }
 }

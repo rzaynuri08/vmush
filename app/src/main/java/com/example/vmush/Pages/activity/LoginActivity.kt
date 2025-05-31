@@ -1,7 +1,9 @@
 package com.example.vmush.Pages.activity
 
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -16,10 +18,26 @@ import retrofit2.Response
 import com.example.vmush.R
 
 class LoginActivity : AppCompatActivity() {
+
+    private lateinit var sharedPreferences: SharedPreferences
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_login)
+
+        // Initialize SharedPreferences
+        sharedPreferences = getSharedPreferences("MyPrefs", MODE_PRIVATE)
+
+        // Check if user is already logged in
+        val isLoggedIn = sharedPreferences.getBoolean("isLoggedIn", false)
+        val username = sharedPreferences.getString("username", "")
+        if (isLoggedIn && !username.isNullOrEmpty()) {
+            // If the user is already logged in, skip login and go directly to MainActivity
+            val intent = Intent(this@LoginActivity, MainActivity::class.java)
+            startActivity(intent)
+            finish() // Close the LoginActivity so the user can't go back to it using the back button
+        }
 
         val edtUsername = findViewById<EditText>(R.id.etUsername)
         val edtPassword = findViewById<EditText>(R.id.etPassword)
@@ -43,6 +61,14 @@ class LoginActivity : AppCompatActivity() {
                         val user = users?.find { it.username == username && it.pwasli == password }
                         if (user != null) {
                             // Login successful, save user info and move to MainActivity
+                            Log.d("LoginActivity", "Saving username: ${user.username}") // Debugging line
+                            with(sharedPreferences.edit()) {
+                                putBoolean("isLoggedIn", true) // Save login status
+                                putString("username", user.username) // Save username
+                                apply() // You can replace with commit() for synchronous saving
+                            }
+
+                            // Navigate to MainActivity
                             val intent = Intent(this@LoginActivity, MainActivity::class.java)
                             startActivity(intent)
                             finish() // Close the login activity so the user can't go back
