@@ -1,5 +1,6 @@
 package com.example.vmush.Pages.Fragment
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -11,6 +12,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.vmush.Pages.activity.DetailKumbungActivity
 import com.example.vmush.R
 import com.example.vmush.adapter.KumbungAdapter
 import com.example.vmush.model.KumbungModel
@@ -35,12 +37,26 @@ class HomeFragment : Fragment() {
         val rvKumbung: RecyclerView = rootView.findViewById(R.id.rvKumbung)
         rvKumbung.layoutManager = LinearLayoutManager(requireContext())
 
-        adapter = KumbungAdapter(linkList)
+        adapter = KumbungAdapter(linkList) { kumbung ->
+            // Handle klik di sini, jalankan intent
+            val selectedLink = extractLinkFromName(kumbung.name) // Extract link asli dari name
+            val intent = Intent(requireContext(), DetailKumbungActivity::class.java).apply {
+                putExtra("name", kumbung.name)
+                putExtra("link", selectedLink) // Kirim link yang dipilih saja
+            }
+            startActivity(intent)
+        }
         rvKumbung.adapter = adapter
 
         getFirebaseLinks("alpant") // Ganti dengan username yang sesuai
 
         return rootView
+    }
+
+    // Fungsi helper untuk extract link dari name
+    private fun extractLinkFromName(uniqueName: String): String {
+        // Karena uniqueName format: "$link#$i"
+        return uniqueName.substringBefore("#")
     }
 
     private fun getFirebaseLinks(username: String) {
@@ -107,18 +123,14 @@ class HomeFragment : Fragment() {
         })
     }
 
-    // Fungsi baru: polling API untuk tiap link setiap 2 detik
     private fun startPollingLinkData(link: String, index: Int) {
         val runnable = object : Runnable {
             override fun run() {
                 fetchLinkData(link, index) {
-                    // Setelah selesai fetch, schedule polling lagi setelah delay
                     handler.postDelayed(this, pollingInterval)
                 }
             }
         }
-
-        // Mulai polling pertama kali
         handler.post(runnable)
     }
 
@@ -176,7 +188,6 @@ class HomeFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        // Stop semua polling ketika fragment dihancurkan
         handler.removeCallbacksAndMessages(null)
     }
 }

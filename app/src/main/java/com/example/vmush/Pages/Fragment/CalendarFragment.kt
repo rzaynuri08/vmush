@@ -1,6 +1,7 @@
 package com.example.vmush.ui
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -8,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.CalendarView
 import android.widget.Toast
+import android.widget.ImageView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -20,6 +22,7 @@ import com.example.vmush.model.DataResponse
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import com.example.vmush.Pages.activity.AddCalenderActivity
 
 class CalendarFragment : Fragment() {
 
@@ -28,6 +31,7 @@ class CalendarFragment : Fragment() {
     private lateinit var adapter: ScheduleAdapter
     private lateinit var recyclerView: RecyclerView
     private lateinit var calendarView: CalendarView
+    private var selectedDate: String? = null
 
     private val sharedPreferences by lazy {
         requireContext().getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
@@ -54,16 +58,28 @@ class CalendarFragment : Fragment() {
 
         // Handle calendar date selection
         calendarView.setOnDateChangeListener { _, year, month, dayOfMonth ->
-            val selectedDate = "$year-${month + 1}-$dayOfMonth"
+            selectedDate = "$year-${month + 1}-$dayOfMonth"
             val username = sharedPreferences.getString("username", null)
 
             Log.d("CalendarFragment", "Selected date: $selectedDate")
             Log.d("CalendarFragment", "Username from SharedPreferences: $username")
 
             if (!username.isNullOrEmpty()) {
-                fetchDataForDate(username, selectedDate)
+                fetchDataForDate(username, selectedDate!!)
             } else {
                 Toast.makeText(requireContext(), "No username found. Please log in again.", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        // Handle icon click to navigate to AddCalendarActivity
+        val addIcon: ImageView = view.findViewById(R.id.icon)
+        addIcon.setOnClickListener {
+            if (selectedDate != null) {
+                val intent = Intent(requireContext(), AddCalenderActivity::class.java)
+                intent.putExtra("selected_date", selectedDate)
+                startActivity(intent)
+            } else {
+                Toast.makeText(requireContext(), "Silakan pilih tanggal terlebih dahulu", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -71,16 +87,12 @@ class CalendarFragment : Fragment() {
     }
 
     private fun fetchDataForDate(username: String, tanggal: String) {
-        // Make the API call using Retrofit
         apiService.getDataPenjadwalan(username, tanggal).enqueue(object : Callback<DataResponse> {
             override fun onResponse(call: Call<DataResponse>, response: Response<DataResponse>) {
                 if (response.isSuccessful) {
                     val data = response.body()?.DataPenjadwalan ?: emptyList()
-
-                    // Update the adapter with new data or show an empty list
                     adapter.updateData(data)
 
-                    // If no data found, show a message
                     if (data.isEmpty()) {
                         Toast.makeText(requireContext(), "No data for selected date", Toast.LENGTH_SHORT).show()
                     }

@@ -9,7 +9,8 @@ import com.example.vmush.R
 import com.example.vmush.model.KumbungModel
 
 class KumbungAdapter(
-    private val listKumbung: List<KumbungModel>
+    private val listKumbung: List<KumbungModel>,
+    private val onItemClick: (KumbungModel) -> Unit
 ) : RecyclerView.Adapter<KumbungAdapter.KumbungViewHolder>() {
 
     inner class KumbungViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -33,6 +34,10 @@ class KumbungAdapter(
         holder.tvHumidity.text = kumbung.humidity
         holder.tvGrowth.text = kumbung.growth
         holder.tvStatus.text = if (kumbung.isActive) "Active" else "Inactive"
+
+        holder.itemView.setOnClickListener {
+            onItemClick(kumbung)
+        }
     }
 
     override fun getItemCount(): Int = listKumbung.size
